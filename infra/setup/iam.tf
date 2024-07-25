@@ -43,9 +43,8 @@ resource "aws_iam_policy" "tf_backend" {
   policy      = data.aws_iam_policy_document.tf_backend.json
 }
 
-resource "aws_iam_policy_attachment" "tf_backend" {
-  name       = "tf-backend-attachment"
-  users      = [aws_iam_user.cd.name]
+resource "aws_iam_user_policy_attachment" "tf_backend" {
+  user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.tf_backend.arn
 }
 

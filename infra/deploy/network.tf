@@ -12,7 +12,7 @@ resource "aws_vpc" "main" {
 # Internet Gateway needed for inbound access to Application Load Balancer #
 ###########################################################################
 
-resource "aws_internet_gateway" "name" {
+resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags = {
     Name = "${local.prefix}-main"
@@ -50,7 +50,7 @@ resource "aws_route_table_association" "public_a" {
 resource "aws_route" "public_internet_access_a" {
   route_table_id         = aws_route_table.public_a.id
   destination_cidr_block = "0.0.0.0/0" #public internet
-  gateway_id             = aws_internet_gateway.name.id
+  gateway_id             = aws_internet_gateway.main.id
 }
 
 # subnet b
@@ -79,7 +79,7 @@ resource "aws_route_table_association" "public_b" {
 resource "aws_route" "public_internet_access_b" {
   route_table_id         = aws_route_table.public_b.id
   destination_cidr_block = "0.0.0.0/0" #public internet
-  gateway_id             = aws_internet_gateway.name.id
+  gateway_id             = aws_internet_gateway.main.id
 }
 
 ############################################

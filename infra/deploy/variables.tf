@@ -15,7 +15,7 @@ variable "contact" {
 
 variable "db_username" {
   description = "Username for the database"
-  default = "db_user"
+  default     = "db_user"
 }
 
 variable "db_password" {
