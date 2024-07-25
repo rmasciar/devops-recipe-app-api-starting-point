@@ -129,7 +129,7 @@ dmypy.json
 .pyre/
 
 # DSSTORE
-.DSSTORE
+.DS_STORE
 
 # Terraform
 # Local .terraform directories
@@ -169,3 +169,5 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+*.hcl
