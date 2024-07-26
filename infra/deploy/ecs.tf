@@ -57,11 +57,11 @@ resource "aws_ecs_task_definition" "api" {
   task_role_arn            = aws_iam_role.app_task.arn
   container_definitions = jsonencode([
     {
-      name              = "api"
-      image             = var.ecr_app_image
+      name              = "server"
+      image             = var.ecr_server_image
       essential         = true
       memoryReservation = 256
-      user              = "django-user"
+      user              = "node"
       environment = [
         {
           name  = "DJANGO_SECRET_KEY"
@@ -90,15 +90,15 @@ resource "aws_ecs_task_definition" "api" {
       ]
       mountPoints = [{
         readOnly      = false
-        containerPath = "/vol/web/static"
-        sourceVolume  = "static"
+        containerPath = "/usr/data/contacts"
+        sourceVolume  = "contacts"
       }]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_task_logs.name
           awslogs-region        = data.aws_region.current.name
-          awslogs-stream-prefix = "api"
+          awslogs-stream-prefix = "server"
         }
       }
     },
@@ -115,11 +115,6 @@ resource "aws_ecs_task_definition" "api" {
       environment = [{
         name  = "APP_HOST"
         value = "127.0.0.1"
-      }]
-      mountPoints = [{
-        readOnly      = true
-        containerPath = "/vol/static"
-        sourceVolume  = "static"
       }]
       logConfiguration = {
         logDriver = "awslogs"
@@ -174,18 +169,18 @@ resource "aws_security_group" "ecs_service" {
 }
 
 resource "aws_ecs_service" "api" {
-  name = "${local.prefix}-api"
-  cluster = aws_ecs_cluster.main.name
-  task_definition = aws_ecs_task_definition.api.family
-  desired_count = 1
-  launch_type = "FARGATE"
-  platform_version = "1.4.0"
+  name                   = "${local.prefix}-api"
+  cluster                = aws_ecs_cluster.main.name
+  task_definition        = aws_ecs_task_definition.api.family
+  desired_count          = 1
+  launch_type            = "FARGATE"
+  platform_version       = "1.4.0"
   enable_execute_command = true
   network_configuration {
     assign_public_ip = true
     subnets = [
       aws_subnet.public_a.id, aws_subnet.public_b.id
     ]
-    security_groups = [ aws_security_group.ecs_service.id ]
+    security_groups = [aws_security_group.ecs_service.id]
   }
 }
