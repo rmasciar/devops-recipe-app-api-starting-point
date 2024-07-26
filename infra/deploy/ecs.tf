@@ -93,14 +93,14 @@ resource "aws_ecs_task_definition" "api" {
         containerPath = "/vol/web/static"
         sourceVolume  = "static"
       }]
-      logConfiguration = [{
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_task_logs.name
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "api"
         }
-      }]
+      }
     },
     {
       name              = "proxy"
@@ -121,14 +121,14 @@ resource "aws_ecs_task_definition" "api" {
         containerPath = "/vol/static"
         sourceVolume  = "static"
       }]
-      logConfiguration = [{
+      logConfiguration = {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_task_logs.name
           awslogs-region        = data.aws_region.current.name
           awslogs-stream-prefix = "proxy"
         }
-      }]
+      }
     }
   ])
   volume {
