@@ -57,11 +57,11 @@ resource "aws_ecs_task_definition" "api" {
   task_role_arn            = aws_iam_role.app_task.arn
   container_definitions = jsonencode([
     {
-      name              = "server"
-      image             = var.ecr_server_image
+      name              = "api"
+      image             = var.ecr_app_image
       essential         = true
       memoryReservation = 256
-      user              = "node"
+      user              = "django-user"
       environment = [
         {
           name  = "DJANGO_SECRET_KEY"
@@ -90,8 +90,8 @@ resource "aws_ecs_task_definition" "api" {
       ]
       mountPoints = [{
         readOnly      = false
-        containerPath = "/usr/data/contacts"
-        sourceVolume  = "contacts"
+        containerPath = "/vol/web/static"
+        sourceVolume  = "static"
       }]
       logConfiguration = {
         logDriver = "awslogs"
@@ -116,6 +116,13 @@ resource "aws_ecs_task_definition" "api" {
         name  = "APP_HOST"
         value = "127.0.0.1"
       }]
+      mountPoints = [
+        {
+          readOnly = true
+          containerPath = "/vol/static"
+          sourceVolume = "static"
+        }
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
