@@ -181,30 +181,6 @@ resource "aws_iam_user_policy_attachment" "rds" {
   policy_arn = aws_iam_policy.rds.arn
 }
 
-data "aws_iam_policy_document" "service_linked_rds" {
-  statement {
-    effect    = "Allow"
-    actions   = ["iam:CreateServiceLinkedRole"]
-    resources = ["arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"]
-    condition {
-      test     = "StringLike"
-      variable = "iam:AWSServiceName"
-      values   = ["rds.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_policy" "service_linked_rds" {
-  name        = "${aws_iam_user.cd.name}-service_linked_rds"
-  description = "Allow Amazon RDS to call AWS services on behalf of your DB instances."
-  policy      = data.aws_iam_policy_document.service_linked_rds.json
-}
-
-resource "aws_iam_user_policy_attachment" "service_linked_rds" {
-  user       = aws_iam_user.cd.name
-  policy_arn = aws_iam_policy.service_linked_rds.arn
-}
-
 #########################
 # Policy for ECS access #
 #########################
@@ -240,6 +216,12 @@ resource "aws_iam_user_policy_attachment" "ecs" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.ecs.arn
 }
+
+
+/*
+resource "aws_iam_service_linked_role" "service_linked_ecs" {
+  aws_service_name = "ecs.amazonaws.com"
+}*/
 
 #########################
 # Policy for IAM access #
@@ -293,7 +275,8 @@ data "aws_iam_policy_document" "logs" {
       "logs:DescribeLogGroups",
       "logs:CreateLogGroup",
       "logs:TagResource",
-      "logs:ListTagsLogGroup"
+      "logs:ListTagsLogGroup",
+      "logs:ListTagsForResource"
     ]
     resources = ["*"]
   }
@@ -308,4 +291,96 @@ resource "aws_iam_policy" "logs" {
 resource "aws_iam_user_policy_attachment" "logs" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.logs.arn
+}
+
+#########################
+# Policy for ELB access #
+#########################
+
+data "aws_iam_policy_document" "elb" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "elasticloadbalancing:DeleteLoadBalancer",
+      "elasticloadbalancing:DeleteTargetGroup",
+      "elasticloadbalancing:DeleteListener",
+      "elasticloadbalancing:DescribeListeners",
+      "elasticloadbalancing:DescribeLoadBalancerAttributes",
+      "elasticloadbalancing:DescribeTargetGroups",
+      "elasticloadbalancing:DescribeTargetGroupAttributes",
+      "elasticloadbalancing:DescribeLoadBalancers",
+      "elasticloadbalancing:CreateListener",
+      "elasticloadbalancing:SetSecurityGroups",
+      "elasticloadbalancing:ModifyLoadBalancerAttributes",
+      "elasticloadbalancing:CreateLoadBalancer",
+      "elasticloadbalancing:ModifyTargetGroupAttributes",
+      "elasticloadbalancing:CreateTargetGroup",
+      "elasticloadbalancing:AddTags",
+      "elasticloadbalancing:DescribeTags",
+      "elasticloadbalancing:ModifyListener",
+      "ec2:DescribeAccountAttributes"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "elb" {
+  name        = "${aws_iam_user.cd.name}-elb"
+  description = "Allow user to manage ELB resources."
+  policy      = data.aws_iam_policy_document.elb.json
+}
+
+resource "aws_iam_user_policy_attachment" "elb" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.elb.arn
+}
+
+########################
+# Service-Linked Roles #
+########################
+
+data "aws_iam_policy_document" "services_linked" {
+  statement {
+    effect    = "Allow"
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"]
+    condition {
+      test     = "StringLike"
+      variable = "iam:AWSServiceName"
+      values   = ["rds.amazonaws.com"]
+    }
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["arn:aws:iam::*:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"]
+    condition {
+      test     = "StringLike"
+      variable = "iam:AWSServiceName"
+      values   = ["ecs.amazonaws.com"]
+    }
+  }
+
+  statement {
+    effect    = "Allow"
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["arn:aws:iam::*:role/aws-service-role/elasticloadbalancing.amazonaws.com/AWSServiceRoleForElasticLoadBalancing"]
+    condition {
+      test     = "StringLike"
+      variable = "iam:AWSServiceName"
+      values   = ["elasticloadbalancing.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "services_linked" {
+  name        = "${aws_iam_user.cd.name}-services_linked"
+  description = "Allow Amazon RDS, ECS, ELB to call AWS services."
+  policy      = data.aws_iam_policy_document.services_linked.json
+}
+
+resource "aws_iam_user_policy_attachment" "services_linked" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.services_linked.arn
 }

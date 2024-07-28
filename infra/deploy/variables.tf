@@ -33,3 +33,7 @@ variable "ecr_app_image" {
 variable "django_secret_key" {
   description = "Secret key for Django"
 }
+
+variable "ssl_certificate" {
+  description = "SSL certificate for RDS connection"
+}
