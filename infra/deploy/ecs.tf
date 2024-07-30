@@ -57,11 +57,11 @@ resource "aws_ecs_task_definition" "api" {
   task_role_arn            = aws_iam_role.app_task.arn
   container_definitions = jsonencode([
     {
-      name              = "api"
-      image             = var.ecr_app_image
+      name              = "server"
+      image             = var.ecr_server_image
       essential         = true
       memoryReservation = 256
-      user              = "django-user"
+      user              = "node"
       environment = [
         {
           name  = "DJANGO_SECRET_KEY"
@@ -92,14 +92,14 @@ resource "aws_ecs_task_definition" "api" {
           value = "/contacts"
         },
         {
-          name  = "ALLOWED_HOSTS"
-          value = "*"
+          name  = "ALLOWED_HOSTS" # Django
+          value = aws_route53_record.app.fqdn
         }
       ]
       mountPoints = [{
         readOnly      = false
-        containerPath = "/vol/web/static"
-        sourceVolume  = "static"
+        containerPath = "/contacts"
+        sourceVolume  = "contacts"
       }]
       logConfiguration = {
         logDriver = "awslogs"
@@ -124,13 +124,6 @@ resource "aws_ecs_task_definition" "api" {
         name  = "APP_HOST"
         value = "127.0.0.1"
       }]
-      mountPoints = [
-        {
-          readOnly = true
-          containerPath = "/vol/static"
-          sourceVolume = "static"
-        }
-      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -142,7 +135,7 @@ resource "aws_ecs_task_definition" "api" {
     }
   ])
   volume {
-    name = "static"
+    name = "contacts"
   }
   runtime_platform {
     operating_system_family = "LINUX"

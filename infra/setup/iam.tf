@@ -3,7 +3,7 @@
 ##############################################################
 
 resource "aws_iam_user" "cd" {
-  name = "recipe-app-api-cd"
+  name = "daruma-webpage-cd"
 
 }
 
@@ -69,7 +69,7 @@ data "aws_iam_policy_document" "ecr" {
       "ecr:PutImage"
     ]
     resources = [
-      aws_ecr_repository.app.arn,
+      aws_ecr_repository.server.arn,
       aws_ecr_repository.proxy.arn,
     ]
   }
@@ -383,4 +383,44 @@ resource "aws_iam_policy" "services_linked" {
 resource "aws_iam_user_policy_attachment" "services_linked" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.services_linked.arn
+}
+
+#############################
+# Policy for Route53 access #
+#############################
+
+data "aws_iam_policy_document" "route53" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "route53:CreateHostedZone",
+      "route53:DeleteHostedZone",
+      "route53:ListHostedZones",
+      "route53:ListHostedZones",
+      "route53:ChangeTagsForResource",
+      "route53:GetHostedZone",
+      "route53:ListTagsForResource",
+      "route53:ChangeResourceRecordSets",
+      "route53:GetChange",
+      "route53:ListResourceRecordSets",
+      "acm:RequestCertificate",
+      "acm:AddTagsToCertificate",
+      "acm:DescribeCertificate",
+      "acm:ListTagsForCertificate",
+      "acm:DeleteCertificate",
+      "acm:CreateCertificate"
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "route53" {
+  name        = "${aws_iam_user.cd.name}-route53"
+  description = "Allow user to manage Route53 resources."
+  policy      = data.aws_iam_policy_document.route53.json
+}
+
+resource "aws_iam_user_policy_attachment" "route53" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.route53.arn
 }

@@ -1,11 +1,11 @@
 variable "prefix" {
   description = "Prefix for resources in AWS"
-  default     = "raa"
+  default     = "dwp"
 }
 
 variable "project" {
   description = "Project name for tagging resources"
-  default     = "recipe-app-api"
+  default     = "daruma-webpage"
 }
 
 variable "contact" {
@@ -15,7 +15,7 @@ variable "contact" {
 
 variable "db_username" {
   description = "Username for the database"
-  default     = "db_user"
+  default     = "postgres"
 }
 
 variable "db_password" {
@@ -26,8 +26,8 @@ variable "ecr_proxy_image" {
   description = "Path to ECR repo with the proxy image"
 }
 
-variable "ecr_app_image" {
-  description = "Path to ECR repo with the app image"
+variable "ecr_server_image" {
+  description = "Path to ECR repo with the server image"
 }
 
 variable "django_secret_key" {
@@ -36,4 +36,19 @@ variable "django_secret_key" {
 
 variable "ssl_certificate" {
   description = "SSL certificate for RDS connection"
+}
+
+variable "dns_zone_name" {
+  description = "Domain name"
+  default     = "darumasoft.com"
+}
+
+variable "subdomain" {
+  description = "Subdomain for each environment"
+  type        = map(string)
+  default = {
+    "prod"    = "www."
+    "staging" = "staging."
+    "dev"     = "dev."
+  }
 }
