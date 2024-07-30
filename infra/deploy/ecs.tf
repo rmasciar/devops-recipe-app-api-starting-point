@@ -57,11 +57,11 @@ resource "aws_ecs_task_definition" "api" {
   task_role_arn            = aws_iam_role.app_task.arn
   container_definitions = jsonencode([
     {
-      name              = "server"
-      image             = var.ecr_server_image
+      name              = "api"
+      image             = var.ecr_app_image
       essential         = true
       memoryReservation = 256
-      user              = "node"
+      user              = "django-user"
       environment = [
         {
           name  = "DJANGO_SECRET_KEY"
@@ -88,25 +88,28 @@ resource "aws_ecs_task_definition" "api" {
           value = var.ssl_certificate
         },
         {
-          name  = "CONTACTS_FOLDER"
-          value = "/contacts"
-        },
-        {
           name  = "ALLOWED_HOSTS" # Django
           value = aws_route53_record.app.fqdn
         }
       ]
-      mountPoints = [{
-        readOnly      = false
-        containerPath = "/contacts"
-        sourceVolume  = "contacts"
-      }]
+      mountPoints = [
+        {
+          readOnly      = false
+          containerPath = "/vol/web/static"
+          sourceVolume  = "static"
+        },
+        {
+          readOnly      = false
+          containerPath = "/vol/web/media"
+          sourceVolume  = "efs-media"
+        },
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs_task_logs.name
           awslogs-region        = data.aws_region.current.name
-          awslogs-stream-prefix = "server"
+          awslogs-stream-prefix = "api"
         }
       }
     },
@@ -135,8 +138,20 @@ resource "aws_ecs_task_definition" "api" {
     }
   ])
   volume {
-    name = "contacts"
+    name = "static"
   }
+  volume {
+    name = "efs-media"
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.media.id
+      transit_encryption = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.media.id
+        iam ="DISABLED"
+      }
+    }
+  }
+  
   runtime_platform {
     operating_system_family = "LINUX"
     cpu_architecture        = "X86_64"
@@ -165,6 +180,14 @@ resource "aws_security_group" "ecs_service" {
       aws_subnet.private_a.cidr_block,
       aws_subnet.private_b.cidr_block
     ]
+  }
+
+  # NFS Port for EFS volumes
+  egress {
+    from_port = 2049
+    to_port = 2049
+    protocol = "tcp"
+    cidr_blocks = [aws_subnet.private_a.cidr_block, aws_subnet.private_b.cidr_block]
   }
 
   # HTTP Inbound access  

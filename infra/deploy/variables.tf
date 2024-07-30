@@ -5,7 +5,7 @@ variable "prefix" {
 
 variable "project" {
   description = "Project name for tagging resources"
-  default     = "daruma-webpage"
+  default     = "recipe-app-api"
 }
 
 variable "contact" {
@@ -15,7 +15,7 @@ variable "contact" {
 
 variable "db_username" {
   description = "Username for the database"
-  default     = "postgres"
+  default     = "recipeapp"
 }
 
 variable "db_password" {
@@ -40,15 +40,15 @@ variable "ssl_certificate" {
 
 variable "dns_zone_name" {
   description = "Domain name"
-  default     = "darumasoft.com"
+  default     = "londonappdev.net"
 }
 
 variable "subdomain" {
   description = "Subdomain for each environment"
   type        = map(string)
   default = {
-    "prod"    = "www."
-    "staging" = "staging."
-    "dev"     = "dev."
+    "prod"    = "api"
+    "staging" = "api.staging"
+    "dev"     = "api.dev"
   }
 }
