@@ -168,6 +168,16 @@ data "aws_iam_policy_document" "rds" {
     ]
     resources = ["*"]
   }
+  statement {
+    effect    = "Allow"
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"]
+    condition {
+      test     = "StringLike"
+      variable = "iam:AWSServiceName"
+      values   = ["rds.amazonaws.com"]
+    }
+  }
 }
 
 resource "aws_iam_policy" "rds" {
@@ -203,6 +213,16 @@ data "aws_iam_policy_document" "ecs" {
       "ecs:TagResource",
     ]
     resources = ["*"]
+  }
+  statement {
+    effect    = "Allow"
+    actions   = ["iam:CreateServiceLinkedRole"]
+    resources = ["arn:aws:iam::*:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"]
+    condition {
+      test     = "StringLike"
+      variable = "iam:AWSServiceName"
+      values   = ["ecs.amazonaws.com"]
+    }
   }
 }
 
@@ -322,46 +342,6 @@ data "aws_iam_policy_document" "elb" {
     ]
     resources = ["*"]
   }
-}
-
-resource "aws_iam_policy" "elb" {
-  name        = "${aws_iam_user.cd.name}-elb"
-  description = "Allow user to manage ELB resources."
-  policy      = data.aws_iam_policy_document.elb.json
-}
-
-resource "aws_iam_user_policy_attachment" "elb" {
-  user       = aws_iam_user.cd.name
-  policy_arn = aws_iam_policy.elb.arn
-}
-
-########################
-# Service-Linked Roles #
-########################
-
-data "aws_iam_policy_document" "services_linked" {
-  statement {
-    effect    = "Allow"
-    actions   = ["iam:CreateServiceLinkedRole"]
-    resources = ["arn:aws:iam::*:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"]
-    condition {
-      test     = "StringLike"
-      variable = "iam:AWSServiceName"
-      values   = ["rds.amazonaws.com"]
-    }
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["iam:CreateServiceLinkedRole"]
-    resources = ["arn:aws:iam::*:role/aws-service-role/ecs.amazonaws.com/AWSServiceRoleForECS"]
-    condition {
-      test     = "StringLike"
-      variable = "iam:AWSServiceName"
-      values   = ["ecs.amazonaws.com"]
-    }
-  }
-
   statement {
     effect    = "Allow"
     actions   = ["iam:CreateServiceLinkedRole"]
@@ -374,15 +354,15 @@ data "aws_iam_policy_document" "services_linked" {
   }
 }
 
-resource "aws_iam_policy" "services_linked" {
-  name        = "${aws_iam_user.cd.name}-services_linked"
-  description = "Allow Amazon RDS, ECS, ELB to call AWS services."
-  policy      = data.aws_iam_policy_document.services_linked.json
+resource "aws_iam_policy" "elb" {
+  name        = "${aws_iam_user.cd.name}-elb"
+  description = "Allow user to manage ELB resources."
+  policy      = data.aws_iam_policy_document.elb.json
 }
 
-resource "aws_iam_user_policy_attachment" "services_linked" {
+resource "aws_iam_user_policy_attachment" "elb" {
   user       = aws_iam_user.cd.name
-  policy_arn = aws_iam_policy.services_linked.arn
+  policy_arn = aws_iam_policy.elb.arn
 }
 
 #############################
@@ -423,4 +403,40 @@ resource "aws_iam_policy" "route53" {
 resource "aws_iam_user_policy_attachment" "route53" {
   user       = aws_iam_user.cd.name
   policy_arn = aws_iam_policy.route53.arn
+}
+
+#########################
+# Policy for EFS access #
+#########################
+
+data "aws_iam_policy_document" "efs" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "elasticfilesystem:DescribeFileSystems",
+      "elasticfilesystem:DescribeAccessPoints",
+      "elasticfilesystem:DeleteFileSystem",
+      "elasticfilesystem:DeleteAccessPoint",
+      "elasticfilesystem:DescribeMountTargets",
+      "elasticfilesystem:DeleteMountTarget",
+      "elasticfilesystem:DescribeMountTargetSecurityGroups",
+      "elasticfilesystem:DescribeLifecycleConfiguration",
+      "elasticfilesystem:CreateMountTarget",
+      "elasticfilesystem:CreateAccessPoint",
+      "elasticfilesystem:CreateFileSystem",
+      "elasticfilesystem:TagResource",
+    ]
+    resources = ["*"]
+  }
+}
+
+resource "aws_iam_policy" "efs" {
+  name        = "${aws_iam_user.cd.name}-efs"
+  description = "Allow user to manage EFS resources."
+  policy      = data.aws_iam_policy_document.efs.json
+}
+
+resource "aws_iam_user_policy_attachment" "efs" {
+  user       = aws_iam_user.cd.name
+  policy_arn = aws_iam_policy.efs.arn
 }
